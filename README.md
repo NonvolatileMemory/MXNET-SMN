@@ -131,6 +131,11 @@ You can sent your money to this [website](https://love.alipay.com/donate/index.h
 
 不好意思，不好意思。
 
+## TODO:
+
+1.save model
+
+2.add dropout
 
 
 
