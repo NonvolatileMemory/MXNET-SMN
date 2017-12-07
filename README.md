@@ -29,21 +29,32 @@ SMN是目前最屌的多轮检索对话模型.
 # How to use?
 **你能不能告诉我怎么用？**
 
-> 1 . get data from msra[douban corpus](https://1drv.ms/u/s!AtcxwlQuQjw1jF0bjeaKHEUNwitA)
-> 2 . get pre-trained word2vec.model use bash *python3.5 gen_w2v.py train.txt train_vec.model train_vec.vec*
-> 3 . get processed data use Process.py(also only support py3)
-> 4 . run the model
 
-1. 下载数据 [douban corpus](https://1drv.ms/u/s!AtcxwlQuQjw1jF0bjeaKHEUNwitA)
-2. 预训练Embedding矩阵*python3.5 gen_w2v.py train.txt train_vec.model train_vec.vec*
-3. 预处理数据使用Process.py
-4. 跑模型
+1.get data from msra[douban corpus](https://1drv.ms/u/s!AtcxwlQuQjw1jF0bjeaKHEUNwitA)
+
+2.get pre-trained word2vec.model use bash *python3.5 gen_w2v.py train.txt train_vec.model train_vec.vec*
+
+3.get processed data use Process.py(also only support py3)
+
+4.run the model
+
+
+1.下载数据 [douban corpus](https://1drv.ms/u/s!AtcxwlQuQjw1jF0bjeaKHEUNwitA)
+
+2.预训练Embedding矩阵*python3.5 gen_w2v.py train.txt train_vec.model train_vec.vec*
+
+3.预处理数据使用Process.py
+
+4.跑模型
 
 额外赠礼：每个py文件的作用
+
+|代码                              |作用                                |
 |:------------------------------------:|------------------------------------|
 |gen_w2v.py|用来生成预训练的词向量|
 |Process.py|用来打包数据|
 |model.py|用来训练模型|
+
 
 <br>
 
