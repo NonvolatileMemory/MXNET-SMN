@@ -1,6 +1,7 @@
 # MXNET-SMN
 ## MXNET-SMN
 Sequential Matching Network(ACL 2017) reimplemented by MXNET1.0-GPU//but you can always use cpu
+
 用mxnet写的SMN，这篇文章发表在ACL 2017，使用MXNET1.0实现
 
 # What's SMN
