@@ -137,5 +137,7 @@ You can sent your money to this [website](https://love.alipay.com/donate/index.h
 
 2.add dropout
 
+3.add evaluations
 
+4.add inference
 
