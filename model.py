@@ -9,17 +9,41 @@ from mxnet.gluon import rnn
 import pickle
 from mxnet import gluon
 from mxnet import autograd
-
+from sklearn.metrics import recall_score as r
 batch_size = 1000
 ctx = mx.gpu(0)
 #136334x200 shape for word embedding
 #Load data
 max_word_per_utterence = 50
-dataset = r"train"
+dataset = r"train_processed"
+test = r"test_processed"
 x = pickle.load(open(dataset,"rb"),encoding='utf-8')
+test_x = pickle.load(open(test,"rb"),encoding='utf-8')
 revs, wordvecs, max_l = x[0], x[1], x[2]
 
 max_turn = 10
+
+def test(Model):
+    test_iter = get_data(test_x[0],wordvecs.word_idx_map,batch_size,max_l=50,val_size = 1000)
+    y_pred, y_true = [],[]
+    for test_data, ground_truth in test_iter:
+        t_data,t_label = test_data,ground_truth
+        test_y_hat = SMN(t_data)[:,1]
+        test_label = nd.array(t_label,ctx=ctx)
+        test_y_hat = test_y_hat.reshape((-1,10))
+        test_label = test_label.reshape((-1,10))
+        test_y_hat = nd.topk(test_y_hat, ret_typ='indices', k=1)
+        test_y_hat = test_y_hat.reshape(-1,)
+        test_y_hat = nd.one_hot(test_y_hat,10)
+        test_y_hat = test_y_hat.reshape(-1,).asnumpy().tolist()
+        test_label = test_label.reshape(-1,).asnumpy().tolist()
+        y_pred = y_pred+test_y_hat
+        y_true = y_true+test_label
+    y_pred = nd.array(y_pred)
+    y_true = nd.array(y_true)
+    #macro_recall = r(y_true, y_pred,  average='macro')
+    #micro_recall = r(y_true, y_pred,  average='micro')
+    print(str(nd.mean(y_pred*y_true).asscalar()))
 def get_idx_from_sent_msg(sents, word_idx_map, max_l=50,mask = False):
     """
     Transforms sentence into a list of indices. Pad with zeroes.
@@ -59,7 +83,7 @@ def get_idx_from_sent(sent, word_idx_map, max_l=50,mask = False):
     return x
 
 def get_data(raw_data,word_idx_map,batch_size,max_l,val_size=0):
-    X,y,X_val,y_val = np.zeros((999000,550)),[],[],[]
+    X,y,X_val,y_val = np.zeros((999000+1000,550)),[],[],[]
     i = 0
     t = 0
     for rev in raw_data:
@@ -67,29 +91,31 @@ def get_data(raw_data,word_idx_map,batch_size,max_l,val_size=0):
         
         sent = get_idx_from_sent_msg(rev["m"], word_idx_map, max_l, False)
         sent += get_idx_from_sent(rev["r"], word_idx_map, max_l, False)
-        if(i<val_size):
-            print(i)
+        if(False):
+            if(i%1000==0):
+                print(i)
             i = i + 1
             X_val.append(sent)
             y_val.append(int(rev["y"]))
         else:
             X[t] = sent
             t = t + 1
-            if(t%100==0):
+            if(t%10000==0):
                 print(t)
             y.append(int(rev["y"]))
-    print(X[10000])
+    X = X[0:t]
+    y = y[0:t]
     X = nd.array(X,ctx =ctx)
     y = nd.array(y,ctx = ctx)
     print("get data")
-    X_val = nd.array(X_val,ctx=ctx)
-    y_val = nd.array(y_val,ctx=ctx)
+    # X_val = nd.array(X_val,ctx=ctx)
+    # y_val = nd.array(y_val,ctx=ctx)
 #    mx.ndarray.reshape(y_val,shape=(batch_size,1))
     train_dataset = gluon.data.ArrayDataset(X, y)
     train_data_iter = gluon.data.DataLoader(train_dataset, batch_size, shuffle=True)
-    val_dataset = gluon.data.ArrayDataset(X_val,y_val)
-    val_data_iter = gluon.data.DataLoader(val_dataset,batch_size,shuffle=True)
-    return train_data_iter,val_data_iter
+    # val_dataset = gluon.data.ArrayDataset(X_val,y_val)
+    # val_data_iter = gluon.data.DataLoader(val_dataset,batch_size,shuffle=True)
+    return train_data_iter#,val_data_iter
 
 class SMN_Last(nn.Block):
     def __init__(self,**kwargs):
@@ -130,42 +156,6 @@ class SMN_Last(nn.Block):
         gru_u_8,_ = self.gru_1(u_8, h_0)
         gru_u_9,_ = self.gru_1(u_9, h_0)
         gru_r,_ = self.gru_1(r, h_0)
-
-        #_,gru_u_0 = self.gru_1(u_0,h_0)
-        #_,gru_u_1 = self.gru_1(u_1,h_0)
-        #_,gru_u_2 = self.gru_1(u_2,h_0)
-        #_,gru_u_3 = self.gru_1(u_3,h_0)
-        #_,gru_u_4 = self.gru_1(u_4,h_0)
-        #_,gru_u_5 = self.gru_1(u_5,h_0)
-        #_,gru_u_6 = self.gru_1(u_6,h_0)
-        #_,gru_u_7 = self.gru_1(u_7,h_0)
-        #_,gru_u_8 = self.gru_1(u_8,h_0)
-        #_,gru_u_9 = self.gru_1(u_9,h_0)
-        #_,gru_r = self.gru_1(r,h_0)
-
-        #gru_u_0 = gru_u_0[0]
-        #gru_u_1 = gru_u_1[0]
-        #gru_u_2 = gru_u_2[0]
-        #gru_u_3 = gru_u_3[0]
-        #gru_u_4 = gru_u_4[0]
-        #gru_u_5 = gru_u_5[0]
-        #gru_u_6 = gru_u_6[0]
-        #gru_u_7 = gru_u_7[0]
-        #gru_u_8 = gru_u_8[0]
-        #gru_u_9 = gru_u_9[0]
-        #gru_r = gru_r[0]
-
-        #gru_u_0 = mx.nd.transpose(gru_u_0, axes=(1, 2, 0))
-        #gru_u_1 = mx.nd.transpose(gru_u_1, axes=(1, 2, 0))
-        #gru_u_2 = mx.nd.transpose(gru_u_2, axes=(1, 2, 0))
-        #gru_u_3 = mx.nd.transpose(gru_u_3, axes=(1, 2, 0))
-        #gru_u_4 = mx.nd.transpose(gru_u_4, axes=(1, 2, 0))
-        #gru_u_5 = mx.nd.transpose(gru_u_5, axes=(1, 2, 0))
-        #gru_u_6 = mx.nd.transpose(gru_u_6, axes=(1, 2, 0))
-        #gru_u_7 = mx.nd.transpose(gru_u_7, axes=(1, 2, 0))
-        #gru_u_8 = mx.nd.transpose(gru_u_8, axes=(1, 2, 0))
-        #gru_u_9 = mx.nd.transpose(gru_u_9, axes=(1, 2, 0))
-
 
         r_t = mx.nd.transpose(r,axes=(0,2,1))
         gru_r_t = mx.nd.transpose(gru_r,axes=(0, 2, 1))
@@ -244,15 +234,14 @@ class MyInit(init.Initializer):
 #params['smn_last0_embedding0_weight'].initialize(MyInit(),force_reinit = True,ctx = ctx)
 #SMN.Embed.weight.set_data(word2vec)
 
-train_iter,val_iter = get_data(revs,wordvecs.word_idx_map,batch_size,max_l=50,val_size = 1000)
+train_iter = get_data(revs,wordvecs.word_idx_map,batch_size,max_l=50,val_size = 1000)
 
 max_epoch = 50
 
 softmax_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
 trainer = gluon.Trainer(SMN.collect_params(), 'adam', {'learning_rate': 0.001})
 
-for test_data, ground_truth in val_iter:
-    t_data,t_label = test_data,ground_truth
+
 
 for epoch in range(max_epoch):
     train_loss = 0.
@@ -264,32 +253,11 @@ for epoch in range(max_epoch):
         loss.backward()
         trainer.step(batch_size)
         print("loss:")
-        #print(np.sum(label.asnumpy()))
         print(nd.mean(loss).asscalar())
-        print("acc:")
-        acc = mx.metric.Accuracy()
-        test_y_hat = SMN(t_data)
-       # print("--------")
-       #  print(test_y_hat)
-        test_label = nd.array(t_label,ctx=ctx)
-        acc.update(preds = [test_y_hat],labels = [test_label])
-        print(acc.get())
-       # acc = None
-        #for test_data, ground_truth in val_iter:
-           # test_y_hat = SMN(test_data)
-           # print(test_y_hat.shape)
-           # acc = mx.metric.Accuracy()
-            #test_y_hat = nd.array(test_y_hat.asnumpy().reshape((2,1000)))
-           # test_label = nd.array(ground_truth,ctx=ctx)
-            #test_label = nd.array(test_label.asnumpy(),ctx = ctx)
-            #print(test_label)
-           # acc.update(preds = [test_y_hat],labels = [test_label])
-           # print(acc.get())
-           # break
+        print("recall:")
+        test(SMN)
         train_loss += nd.mean(loss).asscalar()
-        #train_acc += utils.accuracy(output, label)
         train_acc = 0
-    #test_acc = utils.evaluate_accuracy(test_data, net)
     test_acc = 0
     print("Epoch %d. Loss: %f, Train acc %f, Test acc %f" % (
         epoch, train_loss/len(train_iter), train_acc/len(train_iter), test_acc))
