@@ -112,7 +112,7 @@ def get_data(raw_data,word_idx_map,batch_size,max_l,val_size=0):
     # y_val = nd.array(y_val,ctx=ctx)
 #    mx.ndarray.reshape(y_val,shape=(batch_size,1))
     train_dataset = gluon.data.ArrayDataset(X, y)
-    train_data_iter = gluon.data.DataLoader(train_dataset, batch_size, shuffle=True)
+    train_data_iter = gluon.data.DataLoader(train_dataset, batch_size, shuffle=False)
     # val_dataset = gluon.data.ArrayDataset(X_val,y_val)
     # val_data_iter = gluon.data.DataLoader(val_dataset,batch_size,shuffle=True)
     return train_data_iter#,val_data_iter
